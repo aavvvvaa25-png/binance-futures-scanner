@@ -32,7 +32,9 @@ def get_order_block(df):
     bear_ob = df[(df['c'] < df['o']) & (df['body'] > avg_body)].tail(1)
     return bull_ob, bear_ob
 
-def scan():
+def scan():def scan():
+    send_telegram("🚀 Thilo Bot is LIVE! Test message - if you see this, bot is working!")
+    
     while True:
         try:
             tickers = exchange.fetch_tickers()
