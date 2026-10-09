@@ -51,7 +51,7 @@ def scanner():
                     atr=(df['h']-df['l']).rolling(14).mean().iloc[-1]
 
                     trend_15m = get_trend(sym, '15m', ex)
-                    volume_ok = vol > (vol_avg * 1.3)
+                    volume_ok = vol > (vol_avg * 1.2)
 
                     if (close > res or close > pivot) and ema20 > ema50 and close > ema20 and 45 < rsi < 75 and volume_ok and trend_15m=="UP" and btc_trend=="UP":
                         sl = close - (atr * 1.8)
