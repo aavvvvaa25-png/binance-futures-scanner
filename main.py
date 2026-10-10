@@ -51,7 +51,7 @@ def scanner():
             symbols=[s for s in symbols if '/USDT' in s and 'UP/' not in s and 'DOWN/' not in s][:20]
             for sym in symbols:
                 try:
-                    print(f"Checking {coin}...", flush=True)
+                    print(f"Checking {sym}...", flush=True)
                     ohlcv=ex.fetch_ohlcv(sym, '5m', limit=100)
                     df=pd.DataFrame(ohlcv, columns=['t','o','h','l','c','v'])
                     close=df['c'].iloc[-1]
