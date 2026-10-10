@@ -5,13 +5,7 @@ import os, ccxt, pandas as pd, time, requests
 app = Flask(__name__)
 @app.route('/')
 def home():
-    return "BOT IS LIVE DA 🔥"
-
-def run_web():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host='0.0.0.0', port=port)
-
-Thread(target=run_web, daemon=True).start()
+    return "BOT IS LIVE DA 🔥 Thilo Best!"
 
 # --- TELEGRAM ---
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
@@ -21,8 +15,9 @@ def send(msg):
     try:
         if BOT_TOKEN and CHAT_ID:
             url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-            requests.post(url, data={"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"})
-    except: pass
+            requests.post(url, data={"chat_id": CHAT_ID, "text": msg, "parse_mode": "Markdown"}, timeout=10)
+    except Exception as e:
+        print(f"Telegram Error: {e}")
     print(msg)
 
 def get_rsi(series, period=14):
@@ -38,14 +33,14 @@ def get_trend(symbol, timeframe, ex):
         df = pd.DataFrame(ohlcv, columns=['t','o','h','l','c','v'])
         ema20 = df['c'].ewm(span=20).mean().iloc[-1]
         ema50 = df['c'].ewm(span=50).mean().iloc[-1]
-        if ema20 > ema50: return "UP"
-        else: return "DOWN"
+        return "UP" if ema20 > ema50 else "DOWN"
     except:
         return "UP"
 
 def scanner():
     ex=ccxt.binanceusdm({'enableRateLimit': True})
-    send("🤖 *BEST KAVI BEST BOT STARTED DA!* ✅ Fixed Rate Limit")
+    time.sleep(5)
+    send("🤖 *BEST KAVI BEST BOT STARTED DA!* ✅ Fixed Rate Limit - Thilo Bot LIVE")
     while True:
         try:
             btc_trend = get_trend('BTC/USDT', '1h', ex)
@@ -71,8 +66,7 @@ def scanner():
                     short_cond = (close < sup or close < pivot) and ema20 < ema50 and close < ema20 and 25 < rsi < 55
 
                     if long_cond or short_cond:
-                        volume_ok = vol > (vol_avg * 1.2)
-                        if volume_ok:
+                        if vol > (vol_avg * 1.2):
                             time.sleep(1)
                             trend_15m = get_trend(sym, '15m', ex)
                             if long_cond and trend_15m=="UP" and btc_trend=="UP":
@@ -92,6 +86,14 @@ def scanner():
                     time.sleep(2)
                     continue
             time.sleep(180)
-        except Exception as e: print(e); time.sleep(60)
+        except Exception as e:
+            print(e)
+            time.sleep(60)
 
-scanner()
+# --- MAIN FIX ---
+# Bot ah background la run pannu, Flask ah main la run pannu
+Thread(target=scanner, daemon=True).start()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)
