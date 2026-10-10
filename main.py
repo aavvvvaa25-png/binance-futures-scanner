@@ -28,7 +28,7 @@ def get_trend(symbol, tf, ex):
     except: return "UP"
 
 def scanner():
-    ex=ccxt.binance()
+    ex=ccxt.binanceusdm({'enableRateLimit': True})
     send("🤖 *BEST KAVI BEST BOT STARTED DA!*\n✅ BTC Filter + 15m Trend + SR + Pivot + EMA20/50 + RSI + VOLUME\n5m Entry + SL/TP")
     while True:
         try:
