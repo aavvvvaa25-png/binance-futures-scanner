@@ -43,6 +43,7 @@ def scanner():
     send("🤖 *BEST KAVI BEST BOT STARTED DA!* ✅ Fixed Rate Limit - Thilo Bot LIVE")
     while True:
         try:
+            print(f"--- SCANNING STARTED ---", flush=True)
             btc_trend = get_trend('BTC/USDT', '1h', ex)
             time.sleep(1)
             tickers=ex.fetch_tickers()
@@ -50,6 +51,7 @@ def scanner():
             symbols=[s for s in symbols if '/USDT' in s and 'UP/' not in s and 'DOWN/' not in s][:20]
             for sym in symbols:
                 try:
+                    print(f"Checking {coin}...", flush=True)
                     ohlcv=ex.fetch_ohlcv(sym, '5m', limit=100)
                     df=pd.DataFrame(ohlcv, columns=['t','o','h','l','c','v'])
                     close=df['c'].iloc[-1]
