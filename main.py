@@ -6,7 +6,7 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 app = Flask(__name__)
 @app.route('/')
-def home(): return "Best Kavi ATR Major Only Alive!"
+def home(): return "Best Kavi BEST Bot Alive da!"
 
 def send(text):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -23,20 +23,25 @@ def get_trend(symbol, tf, ex):
         df=pd.DataFrame(ohlcv, columns=['t','o','h','l','c','v'])
         e20=df['c'].ewm(span=20).mean().iloc[-1]
         e50=df['c'].ewm(span=50).mean().iloc[-1]
-        return "UP" if e20 > e50 else "DOWN"
+        if e20 > e50: return "UP"
+        else: return "DOWN"
     except: return "UP"
 
 def scanner():
     ex=ccxt.binance()
-    send("🤖 *BEST KAVI ATR MAJOR BOT STARTED DA!*\n✅ ATR SL + No W/USDC + Major Only")
-    BLACKLIST = ['W/USDT','USDC/USDT','MSTRB/USDT','SPCXB/USDT','SNDKB/USDT','USDE/USDT','FDUSD/USDT','TUSD/USDT']
+    send("🤖 *BEST KAVI BEST BOT STARTED DA!*\n✅ BTC Filter + 15m Trend + SR + Pivot + EMA20/50 + RSI + VOLUME\n5m Entry + SL/TP")
     while True:
         try:
+            # BEST FILTER 1: BTC TREND DA
             btc_trend = get_trend('BTC/USDT', '1h', ex)
-            major_coins = ['BTC/USDT','ETH/USDT','SOL/USDT','BNB/USDT','XRP/USDT','ADA/USDT','DOGE/USDT','AVAX/USDT','DOT/USDT','LINK/USDT','LTC/USDT','BCH/USDT','UNI/USDT','XLM/USDT','ETC/USDT','FIL/USDT','APT/USDT','ARB/USDT','OP/USDT','INJ/USDT','SUI/USDT','SEI/USDT','TIA/USDT','NEAR/USDT','MATIC/USDT','ATOM/USDT','AAVE/USDT','STX/USDT','PEPE/USDT','SHIB/USDT']
-            for sym in major_coins:
-                if sym in BLACKLIST: continue
+
+            tickers=ex.fetch_tickers()
+            symbols=sorted(tickers, key=lambda x: tickers[x]['quoteVolume'] if tickers[x].get('quoteVolume') else 0, reverse=True)
+            symbols=[s for s in symbols if '/USDT' in s and 'UP/' not in s and 'DOWN/' not in s][:60]
+
+            for sym in symbols:
                 try:
+                    # 5m Data
                     ohlcv=ex.fetch_ohlcv(sym, '5m', limit=220)
                     df=pd.DataFrame(ohlcv, columns=['t','o','h','l','c','v'])
                     close=df['c'].iloc[-1]
@@ -48,23 +53,27 @@ def scanner():
                     res=df['h'].rolling(20).max().iloc[-2]
                     sup=df['l'].rolling(20).min().iloc[-2]
                     pivot=(df['h'].iloc[-2]+df['l'].iloc[-2]+df['c'].iloc[-2])/3
-                    atr=(df['h']-df['l']).rolling(14).mean().iloc[-1]
 
+                    # BEST FILTER 2: 15m Trend
                     trend_15m = get_trend(sym, '15m', ex)
-                    volume_ok = vol > (vol_avg * 1.2)
+                    volume_ok = vol > (vol_avg * 1.2) # Volume strong
 
+                    # --- BEST LONG ---
                     if (close > res or close > pivot) and ema20 > ema50 and close > ema20 and 45 < rsi < 75 and volume_ok and trend_15m=="UP" and btc_trend=="UP":
-                        sl = close - (atr * 1.8)
-                        if sl < sup: sl = sup * 0.998
-                        tp1 = close + (close - sl)*1.5
-                        tp2 = close + (close - sl)*3
-                        send(f"🚀 *{sym} - LONG*\nEntry: {close}\nSL: {round(sl,5)}\nTP1: {round(tp1,5)}\nTP2: {round(tp2,5)}\nVol: {round(vol,1)} | BTC: {btc_trend} ✅")
+                        sl=min(sup, df['l'].rolling(10).min().iloc[-1])*0.998
+                        entry=close
+                        tp1=entry + (entry-sl)*1.5
+                        tp2=entry + (entry-sl)*3
+                        send(f"🚀 *{sym} - LONG*\nEntry: {entry}\nSL: {round(sl,5)}\nTP1: {round(tp1,5)}\nTP2: {round(tp2,5)}\nVol: {round(vol,1)} | BTC: {btc_trend} ✅")
+
+                    # --- BEST SHORT ---
                     elif (close < sup or close < pivot) and ema20 < ema50 and close < ema20 and 25 < rsi < 55 and volume_ok and trend_15m=="DOWN" and btc_trend=="DOWN":
-                        sl = close + (atr * 1.8)
-                        if sl > res: sl = res * 1.002
-                        tp1 = close - (sl - close)*1.5
-                        tp2 = close - (sl - close)*3
-                        send(f"🔻 *{sym} - SHORT*\nEntry: {close}\nSL: {round(sl,5)}\nTP1: {round(tp1,5)}\nTP2: {round(tp2,5)}\nVol: {round(vol,1)} | BTC: {btc_trend} ✅")
+                        sl=max(res, df['h'].rolling(10).max().iloc[-1])*1.002
+                        entry=close
+                        tp1=entry - (sl-entry)*1.5
+                        tp2=entry - (sl-entry)*3
+                        send(f"🔻 *{sym} - SHORT*\nEntry: {entry}\nSL: {round(sl,5)}\nTP1: {round(tp1,5)}\nTP2: {round(tp2,5)}\nVol: {round(vol,1)} | BTC: {btc_trend} ✅")
+
                     time.sleep(0.5)
                 except: continue
             time.sleep(50)
@@ -79,7 +88,7 @@ def listener():
                 offset=u['update_id']+1
                 t=u.get('message',{}).get('text','').lower()
                 if 'test' in t or '/start' in t:
-                    send("🔔 *TEST OK DA THILO! MAJOR ATR BOT LIVE DA!* W/USDC varathu da ✅")
+                    send("🔔 *TEST OK DA THILO! BEST BOT LIVE DA!*\nBTC + 15m + 5m + Volume filter ready!\nBreakout vantha vera level signal varum da! 🚀")
         except: time.sleep(5)
 
 threading.Thread(target=lambda: app.run(host='0.0.0.0', port=10000)).start()
